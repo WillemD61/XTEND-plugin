@@ -28,7 +28,9 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 
 # Installation instructions
 
-Prerequisite: make sure Python with the json and requests libraries is installed on your system
+Prerequisite: 
+1) make sure Python with the json and requests libraries is installed on your system
+2) make sure to backup your system before installing. The plugin works in my environment, but is provided as-is without any warranty.
 
 1) Login to the Domoticz server and obtain a command line.
 2) Change to the plugin directory with "cd domoticz/plugins".
@@ -41,4 +43,6 @@ Prerequisite: make sure Python with the json and requests libraries is installed
 9) Check the Domoticz log file for any issues and progress. 
 
 Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" 
+
+
 
