@@ -43,7 +43,7 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 8) It will now create the new devices and after the first polling interval, it will start collecting the data.
 9) Check the Domoticz log file for any issues and progress. 
 
-Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" 
+Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" if git is installed on your server.
 
 # Future development
 
