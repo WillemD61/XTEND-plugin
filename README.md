@@ -24,6 +24,6 @@ I started data collection myself on 25-06-2025. Future versions of the plugin mi
 
 # Domoticz code
 
-The plugin uses the newer DomoticzEx extended plugin framework. It contains one workaround for a Domoticz bug related to kWh devices, as also shown in the Python code. Also, for energy usage (in kWh) it uses the power info (in Watts) from the Xtend and lets Domoticz calculate the energy. Personally, I also use a Homewizard WIFI kWh device for pwoer and energy measurement. This is separate from the plugin.
+The plugin uses the newer DomoticzEx extended plugin framework. It contains one workaround for a Domoticz bug related to kWh devices, as also shown in the Python code. Also, for energy usage (in kWh) it uses the power info (in Watts) from the Xtend and lets Domoticz calculate the energy in kWh. Personally, I also use a Homewizard WIFI kWh device for power and energy measurement. This is separate from the plugin.
 
 
