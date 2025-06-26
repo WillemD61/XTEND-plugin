@@ -26,11 +26,12 @@ I started data collection myself on 25-06-2025. Future versions of the plugin mi
 
 The plugin uses the newer DomoticzEx extended plugin framework. It contains one workaround for a Domoticz bug related to kWh devices, as also shown in the Python code. Also, for energy usage (in kWh) it uses the power info (in Watts) from the Xtend and lets Domoticz calculate the energy in kWh. Personally, I also use a Homewizard WIFI kWh device for power and energy measurement. This is separate from the plugin.
 
-# Installation instructions
+# Prerequisite for installation 
 
-Prerequisite: 
-1) make sure Python with the json and requests libraries is installed on your system
-2) make sure to backup your system before installing. The plugin works in my environment, but is provided as-is without any warranty.
+1) Make sure Python is installed on your system with the json and requests libraries. 
+2) Make sure to backup your system before installing. The plugin works in my environment, but is provided as-is without any warranty.
+
+# Installation instructions
 
 1) Login to the Domoticz server and obtain a command line.
 2) Change to the plugin directory with "cd domoticz/plugins".
