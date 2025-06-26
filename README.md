@@ -45,5 +45,9 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 
 Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" 
 
+# Future development
+
+Expected: Create either a Dashticz dashboard or a Domoticz dashboard (using roomplan/floorplan).
+
 
 
