@@ -28,6 +28,8 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 
 # Installation instructions
 
+Prerequisite: make sure Python with the json and requests libraries is installed on your system
+
 1) Login to the Domoticz server and obtain a command line.
 2) Change to the plugin directory with "cd domoticz/plugins".
 3) Create a new plugin directory with "mkdir XTEND-plugin".
@@ -39,6 +41,4 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 9) Check the Domoticz log file for any issues and progress. 
 
 Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" 
-
-
 
