@@ -10,8 +10,8 @@ This plugin does NOT communicate data back to the Xtend. It does NOT allow any c
 
 The plugin uses the WIFI connection of the Xtend indoor unit. The WIFI connection needs to be activated by pressing the button on the Xtend indoor unit after which the LED will start flashing purple. The Domoticz server needs to be connected to the WIFI connection of the Xtend (see user manual). I use a Raspberry Pi as Domoticz server, which is connected with a LAN/Ethernet cable to my central home router so the WIFI connection of the Raspberry Pi is then available for the connection to the Xtend.
 
-The WIFI connection of the Xtend needs to be kept active, otherwise it will close automatically after 30 minutes. Normally the plugin will keep the connection active but as an additional assurance, just in case Domoticz or the plugin crashes, it is recommended to install an additional data query in the system crontab, using the following line:
-*/5 * * * * curl 10.20.30.1/api/stats/values?fields=6573
+The WIFI connection of the Xtend needs to be kept active, otherwise it will close automatically after 30 minutes. Normally the plugin will keep the connection active but as an additional assurance, just in case Domoticz or the plugin crashes, it is recommended to install an additional data query in the system crontab, using the following line:<br/>
+*/5 * * * * curl 10.20.30.1/api/stats/values?fields=6573<br/>
 This will request the ambient temperature every 5 minutes and therefore keep the connection open even if Domoticz fails. For even more assurance this query could be done from a separate server, i.e. different hardware from the Domoticz server.
 
 # Sensor data 
