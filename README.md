@@ -49,5 +49,7 @@ Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/X
 
 Expected: Create either a Dashticz dashboard or a Domoticz dashboard (using roomplan/floorplan).
 
+Known issues to be fixed: code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. Value updates are on unit 15, coil temp. Unit 9 does not exist.
+
 
 
