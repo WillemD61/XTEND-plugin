@@ -2,7 +2,7 @@
 
 This is a Domoticz plugin for collection of data from an Intergas Xtend heatpump unit.
 
-Once installed and activated, the plugin will create 52 Domoticz devices (in plugin version 1.0.0) and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard (that is a planned future publication here on Github).
+Once installed and activated, the plugin will create 52 Domoticz devices (in plugin version 1.0.1) and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard. A config file for a Dashticz dashboard is also created, see below for instructions.
 
 This plugin does NOT communicate data back to the Xtend. It does NOT allow any control of the heatpump. It only collects information. For anyone wanting to control for example the thermostat setpoint, the Intergas InComfort LAN2RF Gateway hardware plugin is recommended (provided you have the Intergas Gateway installed of course) or any other Opentherm communication device.
 
@@ -45,11 +45,27 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 
 Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/XTEND-plugin" if git is installed on your server.
 
-# Future development
+# Dashticz dashboard installation
 
-Expected: Create either a Dashticz dashboard or a Domoticz dashboard (using roomplan/floorplan).
+On startup, the plugin will create a template config file for a Dashticz screen showing all 52 datapoints.
 
-Known issues to be fixed: code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. Value updates are on unit 15, coil temp. Unit 9 does not exist.
+Installation instructions:
+1) Make sure you have Dashticz installed
+2) Login and go to the domoticz folder with "cd domoticz"
+3) Edit the file, for example with "sudo nano DASHTICZCONFIG.js"
+4) Change line 3 so it shows the Domoticz IP and Port number of your Domoticz installation, then save the file.
+5a) If you do not have other Dashticz screens just copy the file over with "sudo cp DASHTICZCONFIG.js ../dashticz/custom/CONFIG.js"
+or
+5b) If you have existing Dashticz screens then insert the block, column and screen definitions into your existing CONFIG.js file and change the screen number to match your installation.
+
+# Release Notes
+
+1.0.0 initial release
+1.0.1 
+     * code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. As result value updates were on unit 15, coil temp. Unit 9 did not exist. In version 1.0.1 unit 9 now shows the software version of the Xtend
+     * error handling (try/except) was added for a closed Xtend WIFI connection. Error messages are shown in the logfile.
+     * the code for the dashticz dashboard was added
+     * Boiler status value now shows text instead of number, for some known values.
 
 
 

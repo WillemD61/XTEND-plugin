@@ -1,8 +1,13 @@
 # Intergas Xtend plugin, developed using Basic Python Plugin Example as provided by GizMoCuz
 #
 # author WillemD61
+# version 1.0.1
+# - removed double use of code 65c1 (device 9 and 15 in version 1.0.0.)
+# - added description for Boiler status values (843a)
+# - added error handling in case XTEND wifi connection not active
+# - added code for generating default Dashticz config.js for dashboard
 """
-<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.0" >
+<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.1" >
     <description>
         <h2>Intergas Xtend heatpump</h2><br/>
         This plugin uses the API on the Intergas Xtend WIFI connection to get the values of a large numbers of parameters<br/>
@@ -29,6 +34,7 @@
 """
 import DomoticzEx as Domoticz
 import json,requests   # make sure these are available in your system environment
+from requests.exceptions import Timeout
 
 # A dictionary to list all parameters to be retrieved from Xtend and to define the Domoticz devices to hold them.
 # Temperature sensor are listed first but order of sensors is not important for the functioning of the program
@@ -48,7 +54,7 @@ DEVSLIST={
     "62ed":  [ 6, 80, 5, 0, {}, 0.01, "HP setpoint temp"],
     "65d9":  [ 7, 80, 5, 0, {}, 0.01, "Exhaust gas temp"],
     "6505":  [ 8, 80, 5, 0, {}, 0.01, "Suction line gas temp"],
-    "65c1":  [ 9, 80, 5, 0, {}, 0.01, "Evaporator temp"],
+    "47e0":  [ 9, 243,19, 0, {}, 1, "Software version"], # added to replace unused device in version 1.0.0.
     "6c26":  [ 10, 80, 5, 0, {}, 0.01, "Condensor gas temp"],
     "6ceb":  [ 11, 80, 5, 0, {}, 0.01, "Condensor liquid temp"],
     "6cfb":  [ 12, 80, 5, 0, {}, 0.01, "Suction line overheat temp"],
@@ -143,6 +149,10 @@ class XtendPlugin:
                     Devices[DeviceID].Units[Unit].Update(UpdateOptions=True)
                 else:
                     Domoticz.Unit(DeviceID=DeviceID,Unit=Unit, Name=Name, Type=Type, Subtype=Subtype, Switchtype=Switchtype, Options=Options, Used=1, Description=Description).Create()
+        for Dev in DEVSLIST:
+            Domoticz.Log("DEVSLIST "+str(DEVSLIST[Dev][0])+DEVSLIST[Dev][6])
+        self.createCONFIGJS()
+
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -169,126 +179,257 @@ class XtendPlugin:
     def getXtendData(self):
         Domoticz.Log("getXtendData called")
         self.Hwid=Parameters['HardwareID']
-        response=requests.get(APIurl)
-        if response.status_code==200:
-            responseJson=response.json()
-            Domoticz.Log(responseJson["stats"])
+        try:
+            response=requests.get(APIurl, timeout=5)
+            if response.status_code==200:
+                responseJson=response.json()
+                Domoticz.Log(responseJson["stats"])
+                for Dev in DEVSLIST:
+                    type=DEVSLIST[Dev][1]
+                    subtype=DEVSLIST[Dev][2]
+                    Unit=DEVSLIST[Dev][0]
+                    DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                    if Devices[DeviceID].Units[Unit].Used==1:
+                        if ((type==80) or # temperature device
+                            (type==113) or # counter device
+                            ((type==243) and (subtype==9)) or # pressure device
+                            ((type==243) and (subtype==30)) or # waterflow device
+                            ((type==243) and (subtype==7)) or # fan device
+                            ((type==243) and (subtype==6)) or # percentage device
+                            ((type==243) and (subtype==31)) # custom device
+                                                    ):
+                            multiplier=DEVSLIST[Dev][5]
+                            if multiplier==1:
+                                fieldValue=round(float(multiplier*responseJson["stats"][Dev]),0)
+                            else:
+                                fieldValue=round(float(multiplier*responseJson["stats"][Dev]),1)
+                            Devices[DeviceID].Units[Unit].nValue=fieldValue
+                            Devices[DeviceID].Units[Unit].sValue=str(fieldValue)
+                            Devices[DeviceID].Units[Unit].Update()
+
+                        if ((type==243) and (subtype==29)): # kwh device
+                            fieldValue=responseJson["stats"][Dev]
+                            Devices[DeviceID].Units[Unit].nValue=0
+                            Devices[DeviceID].Units[Unit].sValue=str(fieldValue)+";1" # watts are supplied, kwh are calculated by Domoticz.
+                            Devices[DeviceID].Units[Unit].Update()
+                        if ((type==243) and (subtype==19)): # text device
+                            fieldValue=responseJson["stats"][Dev]
+                            if Dev=="47e0":
+                                Devices[DeviceID].Units[Unit].nValue=0
+                                fieldText=fieldValue
+                            else:
+                                Devices[DeviceID].Units[Unit].nValue=fieldValue
+                                fieldText=str(fieldValue)
+                            if Dev=='777d':
+                                if fieldValue==0: fieldText="DHW"
+                                elif fieldValue==1: fieldText="HEATING"
+                                elif fieldValue==2:  fieldText="COOLING"
+                                elif fieldValue==253: fieldText="PUMPDOWN"
+                                elif fieldValue==254: fieldText="OFF"
+                                elif fieldValue==255: fieldText="UNDEFINED"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='77dd':
+                                if fieldValue==0: fieldText="MONITOR_LOCKOUT"
+                                elif fieldValue==1: fieldText="PUMP_VENTING"
+                                elif fieldValue==2:  fieldText="SERVICE"
+                                elif fieldValue==3: fieldText="DEFROST"
+                                elif fieldValue==4: fieldText="DHW"
+                                elif fieldValue==5: fieldText="ROOMHEATING_COMFORT"
+                                elif fieldValue==6: fieldText="ROOMHEATING_ECO"
+                                elif fieldValue==7: fieldText="ROOMCOOLING"
+                                elif fieldValue==8: fieldText="DHW_HEATEXCHANGE"
+                                elif fieldValue==9: fieldText="FLOORHEATINGPROTOCOL"
+                                elif fieldValue==12: fieldText="ANTIFREEZE"
+                                elif fieldValue==13: fieldText="PUMP_MAINTENANCE"
+                                elif fieldValue==14: fieldText="IDLE"
+                                elif fieldValue==255: fieldText="NO_TASK"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='6578':
+                                if fieldValue==0: fieldText="COOLING"
+                                elif fieldValue==1: fieldText="HEATING"
+                                elif fieldValue==2:  fieldText="DEFROSTING"
+                                elif fieldValue==3: fieldText="PUMPDOWN"
+                                elif fieldValue==255: fieldText="UNDEFINED"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='657e':
+                                if fieldValue==0: fieldText="DHW"
+                                elif fieldValue==1: fieldText="HEATING"
+                                elif fieldValue==2:  fieldText="COOLING"
+                                elif fieldValue==253: fieldText="PUMPDOWN"
+                                elif fieldValue==254: fieldText="OFF"
+                                elif fieldValue==255: fieldText="UNDEFINED"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='7e51':
+                                if fieldValue==0: fieldText="OPENTHERM"
+                                elif fieldValue==15: fieldText="BOILER_EXT"
+                                elif fieldValue==24:  fieldText="FROST"
+                                elif fieldValue==37:  fieldText="CH_RF"
+                                elif fieldValue==51:  fieldText="DHW_INT"
+                                elif fieldValue==85:  fieldText="SENSORTEST"
+                                elif fieldValue==86:  fieldText="COMMISSIONING"
+                                elif fieldValue==87:  fieldText="CRANKHEATING"
+                                elif fieldValue==102:  fieldText="CH"
+                                elif fieldValue==103:  fieldText="CH_WAIT"
+                                elif fieldValue==104:  fieldText="DEFROSTING"
+                                elif fieldValue==117:  fieldText="STARTING_COOLING"
+                                elif fieldValue==118:  fieldText="COOLING"
+                                elif fieldValue==119:  fieldText="COOLING_WAIT"
+                                elif fieldValue==126:  fieldText="STANDBY"
+                                elif fieldValue==127:  fieldText="OFF"
+                                elif fieldValue==153:  fieldText="POSTRUN_BOILER"
+                                elif fieldValue==170:  fieldText="SERVICE"
+                                elif fieldValue==189:  fieldText="POSTRUN_COOLING"
+                                elif fieldValue==204:  fieldText="DHW"
+                                elif fieldValue==205:  fieldText="DHW_HRECO"
+                                elif fieldValue==230:  fieldText="STARTING_CH"
+                                elif fieldValue==231:  fieldText="POSTRUN_CH"
+                                elif fieldValue==240:  fieldText="BOILER_INT"
+                                elif fieldValue==255:  fieldText="HEATUP"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='7e7a':
+                                if fieldValue==0: fieldText="STARTUP"
+                                elif fieldValue==1: fieldText="INTERPURGE"
+                                elif fieldValue==2:  fieldText="POSTPURGE"
+                                elif fieldValue==4: fieldText="PREPURGE"
+                                elif fieldValue==8: fieldText="IGNITION"
+                                elif fieldValue==16: fieldText="WAITING"
+                                elif fieldValue==32: fieldText="RUNNING"
+                                elif fieldValue==64: fieldText="REST"
+                                elif fieldValue==128: fieldText="LOCKOUT"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+                            if Dev=='843a':
+                                if fieldValue==0: fieldText="OFF"
+                                elif fieldValue==12: fieldText="DHW"
+                                else: fieldText="Unknown, value: "+str(fieldValue)
+
+                            Devices[DeviceID].Units[Unit].sValue=fieldText
+                            Devices[DeviceID].Units[Unit].Update()
+            else:
+                raise Exception
+        except Timeout:
+            Domoticz.Error("Timeout on getting Xtend data. Check connection.")
+        except:
+            Domoticz.Error("No proper Xtend data received. Check connection.")
+
+
+    def createCONFIGJS(self): # create a default CONFIG.js file for a Dashticz dashboard
+        try:
+            fileHandle=open("DASHTICZCONFIG.js","w")
+            # file heading
+            print("var config = {}",file=fileHandle)
+            print("config['language'] = 'en_US'; //or: nl_NL, en_US, de_DE, fr_FR, hu_HU, it_IT, pt_PT, sv_SV",file=fileHandle)
+            print("config['domoticz_ip'] = 'http://xxx.xxx.xxx.xxx:port';",file=fileHandle)
+            print("config['domoticz_refresh'] = '5';",file=fileHandle)
+            print("config['dashticz_refresh'] = '60';",file=fileHandle)
+            # blocks
+            print("//Definition of blocks",file=fileHandle)
+            print("blocks = {}",file=fileHandle)
             for Dev in DEVSLIST:
-                type=DEVSLIST[Dev][1]
-                subtype=DEVSLIST[Dev][2]
                 Unit=DEVSLIST[Dev][0]
                 DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
-                if Devices[DeviceID].Units[Unit].Used==1:
-                    if ((type==80) or # temperature device
-                        (type==113) or # counter device
-                        ((type==243) and (subtype==9)) or # pressure device
-                        ((type==243) and (subtype==30)) or # waterflow device
-                        ((type==243) and (subtype==7)) or # fan device
-                        ((type==243) and (subtype==6)) or # percentage device
-                        ((type==243) and (subtype==31)) # custom device
-                                                 ):
-                        multiplier=DEVSLIST[Dev][5]
-                        if multiplier==1:
-                            fieldValue=round(float(multiplier*responseJson["stats"][Dev]),0)
-                        else:
-                            fieldValue=round(float(multiplier*responseJson["stats"][Dev]),1)
-                        Devices[DeviceID].Units[Unit].nValue=fieldValue
-                        Devices[DeviceID].Units[Unit].sValue=str(fieldValue)
-                        Devices[DeviceID].Units[Unit].Update()
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    print("blocks["+"\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'] = {",file=fileHandle)
+                else:
+                    print("blocks["+str(Devices[DeviceID].Units[Unit].ID)+"] = {",file=fileHandle)
 
-                    if ((type==243) and (subtype==29)): # kwh device
-                        fieldValue=responseJson["stats"][Dev]
-                        Devices[DeviceID].Units[Unit].nValue=0
-                        Devices[DeviceID].Units[Unit].sValue=str(fieldValue)+";1" # watts are supplied, kwh are calculated by Domoticz.
-                        Devices[DeviceID].Units[Unit].Update()
-                    if ((type==243) and (subtype==19)): # text device
-                        fieldValue=responseJson["stats"][Dev]
-                        Devices[DeviceID].Units[Unit].nValue=fieldValue
-                        fieldText=str(fieldValue)
-                        if Dev=='777d':
-                            if fieldValue==0: fieldText="DHW"
-                            elif fieldValue==1: fieldText="HEATING"
-                            elif fieldValue==2:  fieldText="COOLING"
-                            elif fieldValue==253: fieldText="PUMPDOWN"
-                            elif fieldValue==254: fieldText="OFF"
-                            elif fieldValue==255: fieldText="UNDEFINED"
-                            else: fieldText="Unknown"
-                        if Dev=='77dd':
-                            if fieldValue==0: fieldText="MONITOR_LOCKOUT"
-                            elif fieldValue==1: fieldText="PUMP_VENTING"
-                            elif fieldValue==2:  fieldText="SERVICE"
-                            elif fieldValue==3: fieldText="DEFROST"
-                            elif fieldValue==4: fieldText="DHW"
-                            elif fieldValue==5: fieldText="ROOMHEATING_COMFORT"
-                            elif fieldValue==6: fieldText="ROOMHEATING_ECO"
-                            elif fieldValue==7: fieldText="ROOMCOOLING"
-                            elif fieldValue==8: fieldText="DHW_HEATEXCHANGE"
-                            elif fieldValue==9: fieldText="FLOORHEATINGPROTOCOL"
-                            elif fieldValue==12: fieldText="ANTIFREEZE"
-                            elif fieldValue==13: fieldText="PUMP_MAINTENANCE"
-                            elif fieldValue==14: fieldText="IDLE"
-                            elif fieldValue==255: fieldText="NO_TASK"
-                            else: fieldText="Unknown"
-                        if Dev=='6578':
-                            if fieldValue==0: fieldText="COOLING"
-                            elif fieldValue==1: fieldText="HEATING"
-                            elif fieldValue==2:  fieldText="DEFROSTING"
-                            elif fieldValue==3: fieldText="PUMPDOWN"
-                            elif fieldValue==255: fieldText="UNDEFINED"
-                            else: fieldText="Unknown"
-                        if Dev=='657e':
-                            if fieldValue==0: fieldText="DHW"
-                            elif fieldValue==1: fieldText="HEATING"
-                            elif fieldValue==2:  fieldText="COOLING"
-                            elif fieldValue==253: fieldText="PUMPDOWN"
-                            elif fieldValue==254: fieldText="OFF"
-                            elif fieldValue==255: fieldText="UNDEFINED"
-                            else: fieldText="Unknown"
-                        if Dev=='7e51':
-                            if fieldValue==0: fieldText="OPENTHERM"
-                            elif fieldValue==15: fieldText="BOILER_EXT"
-                            elif fieldValue==24:  fieldText="FROST"
-                            elif fieldValue==37:  fieldText="CH_RF"
-                            elif fieldValue==51:  fieldText="DHW_INT"
-                            elif fieldValue==85:  fieldText="SENSORTEST"
-                            elif fieldValue==86:  fieldText="COMMISSIONING"
-                            elif fieldValue==87:  fieldText="CRANKHEATING"
-                            elif fieldValue==102:  fieldText="CH"
-                            elif fieldValue==103:  fieldText="CH_WAIT"
-                            elif fieldValue==104:  fieldText="DEFROSTING"
-                            elif fieldValue==117:  fieldText="STARTING_COOLING"
-                            elif fieldValue==118:  fieldText="COOLING"
-                            elif fieldValue==119:  fieldText="COOLING_WAIT"
-                            elif fieldValue==126:  fieldText="STANDBY"
-                            elif fieldValue==127:  fieldText="OFF"
-                            elif fieldValue==153:  fieldText="POSTRUN_BOILER"
-                            elif fieldValue==170:  fieldText="SERVICE"
-                            elif fieldValue==189:  fieldText="POSTRUN_COOLING"
-                            elif fieldValue==204:  fieldText="DHW"
-                            elif fieldValue==205:  fieldText="DHW_HRECO"
-                            elif fieldValue==230:  fieldText="STARTING_CH"
-                            elif fieldValue==231:  fieldText="POSTRUN_CH"
-                            elif fieldValue==240:  fieldText="BOILER_INT"
-                            elif fieldValue==255:  fieldText="HEATUP"
-                            else: fieldText="Unknown"
-                        if Dev=='7e7a':
-                            if fieldValue==0: fieldText="STARTUP"
-                            elif fieldValue==1: fieldText="INTERPURGE"
-                            elif fieldValue==2:  fieldText="POSTPURGE"
-                            elif fieldValue==4: fieldText="PREPURGE"
-                            elif fieldValue==8: fieldText="IGNITION"
-                            elif fieldValue==16: fieldText="WAITING"
-                            elif fieldValue==32: fieldText="RUNNING"
-                            elif fieldValue==64: fieldText="REST"
-                            elif fieldValue==128: fieldText="LOCKOUT"
-                            else: fieldText="Unknown"
+                print("    last_update:false,",file=fileHandle)
+                print("    width: 12",file=fileHandle)
+                print("}",file=fileHandle)
+            # columns
+            print("//Definition of columns",file=fileHandle)
+            print("columns = {}",file=fileHandle)
 
-                        Devices[DeviceID].Units[Unit].sValue=fieldText
-                        Devices[DeviceID].Units[Unit].Update()
+            print("columns[\"xtendsummary\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [1,2,3,47,49,48,51,50,9]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
+
+            print("columns[\"xtendtoday\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [22,32,33,36,37,38,43,44,45]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
+
+            print("columns[\"xtendactual1\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [6,5,4,7,8,10,11,12,13]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
+
+            print("columns[\"xtendactual2\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [14,15,23,24,27,30,26,31]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
+
+            print("columns[\"boileractual1\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [34,35,39,40,52,46,41,42]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
 
 
-        else:
-            Domoticz.Log("No proper Xtend data received. Check connection.")
+            print("columns[\"boileractual2\"] = {",file=fileHandle)
+            print("    blocks : [",end=" ",file=fileHandle)
+            for Unit in [16,17,18,19,28,29,20,21,25]:
+                DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
+                if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
+                    DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
+                else:
+                    DomoticzID=str(Devices[DeviceID].Units[Unit].ID)
+
+                print(DomoticzID,end=",",file=fileHandle)
+            print("],",file=fileHandle)
+            print("    width: 2",file=fileHandle)
+            print("}",file=fileHandle)
+
+
+            # screens
+            print("//Definition of screens",file=fileHandle)
+            print("screens = {}",file=fileHandle)
+            print("screens[1] = {",file=fileHandle)  # change this screen number if you already have existing dashticz screens
+            print("    columns: [\"xtendsummary\",\"xtendtoday\",\"xtendactual1\",\"xtendactual2\",\"boileractual1\",\"boileractual2\"]",file=fileHandle)
+            print("}",file=fileHandle)
+            fileHandle.close()
+        except:
+            Domoticz.Error("ERROR: problem creating default Dashticz CONFIG.js")
+            fileHandle.close()
 
 global _plugin
 _plugin = XtendPlugin()
