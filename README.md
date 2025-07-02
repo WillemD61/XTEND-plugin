@@ -60,7 +60,7 @@ or</br>
 
 # Release Notes
 
-1.0.0 initial release
+1.0.0 initial release</br>
 1.0.1 </br>
      * code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. As result value updates were on unit 15, coil temp. Unit 9 did not exist. In version 1.0.1 unit 9 now shows the software version of the Xtend</br>
      * error handling (try/except) was added for a closed Xtend WIFI connection. Error messages are shown in the logfile.</br>
