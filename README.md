@@ -53,19 +53,19 @@ Installation instructions:
 1) Make sure you have Dashticz installed
 2) Login and go to the domoticz folder with "cd domoticz"
 3) Edit the file, for example with "sudo nano DASHTICZCONFIG.js"
-4) Change line 3 so it shows the Domoticz IP and Port number of your Domoticz installation, then save the file.
-5a) If you do not have other Dashticz screens just copy the file over with "sudo cp DASHTICZCONFIG.js ../dashticz/custom/CONFIG.js"
-or
-5b) If you have existing Dashticz screens then insert the block, column and screen definitions into your existing CONFIG.js file and change the screen number to match your installation.
+4) Change line 3 so it shows the Domoticz IP and Port number of your Domoticz installation, then save the file.</br>
+5a) If you do not have other Dashticz screens just copy the file over with "sudo cp DASHTICZCONFIG.js ../dashticz/custom/CONFIG.js"</br>
+or</br>
+5b) If you have existing Dashticz screens then insert the block, column and screen definitions into your existing CONFIG.js file and change the screen number to match your installation.</br>
 
 # Release Notes
 
 1.0.0 initial release
-1.0.1 
-     * code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. As result value updates were on unit 15, coil temp. Unit 9 did not exist. In version 1.0.1 unit 9 now shows the software version of the Xtend
-     * error handling (try/except) was added for a closed Xtend WIFI connection. Error messages are shown in the logfile.
-     * the code for the dashticz dashboard was added
-     * Boiler status value now shows text instead of number, for some known values.
+1.0.1 </br>
+     * code 65c1 was used twice, both for unit 9 and 15, evaporator temp and coil temp. As result value updates were on unit 15, coil temp. Unit 9 did not exist. In version 1.0.1 unit 9 now shows the software version of the Xtend</br>
+     * error handling (try/except) was added for a closed Xtend WIFI connection. Error messages are shown in the logfile.</br>
+     * the code for the dashticz dashboard was added</br>
+     * Boiler status value now shows text instead of number, for some known values.</br>
 
 
 
