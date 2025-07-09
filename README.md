@@ -66,6 +66,8 @@ or</br>
      * error handling (try/except) was added for a closed Xtend WIFI connection. Error messages are shown in the logfile.</br>
      * the code for the dashticz dashboard was added</br>
      * Boiler status value now shows text instead of number, for some known values.</br>
-
+1.0.2 </br>
+     * added shorter polling intervals
+     * replaced 8e38 by 7ee6. Note the description on the existing device needs to be adapted manually
 
 
