@@ -6,6 +6,9 @@
 # - added description for Boiler status values (843a)
 # - added error handling in case XTEND wifi connection not active
 # - added code for generating default Dashticz config.js for dashboard
+# version 1.0.2
+# - added shorter polling intervals
+# - replaced datapoint 8e38 by 7ee6, boiler temp
 """
 <plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.1" >
     <description>
@@ -22,6 +25,9 @@
     <params>
         <param field="Mode1" label="Polling Interval" width="150px">
             <options>
+                <option label="10 seconds" value="10" />
+                <option label="20 seconds" value="20" />
+                <option label="30 seconds" value="30" />
                 <option label="1 minute" value="60" default="true" />
                 <option label="2 minutes" value="120" />
                 <option label="3 minutes" value="180" />
@@ -61,7 +67,7 @@ DEVSLIST={
     "6c33":  [ 13, 80, 5, 0, {}, 0.01, "Discharge overheat temp"],
     "6c53":  [ 14, 80, 5, 0, {}, 0.01, "Subcooling temp"],
     "65c1":  [ 15, 80, 5, 0, {}, 0.01, "Coil temp"],
-    "8e38":  [ 16, 80, 5, 0, {}, 0.01, "Boiler temp"],
+    "7ee6":  [ 16, 80, 5, 0, {}, 0.01, "Boiler temp"], # replacing 8e38 because no longer available in firmware 0.86
     "8e8f":  [ 17, 80, 5, 0, {}, 0.01, "Boiler CH setpoint temp"],
     "625b":  [ 18, 80, 5, 0, {}, 0.01, "Boiler CH supply temp"],
     "623c":  [ 19, 80, 5, 0, {}, 0.01, "Boiler CH return temp"],
