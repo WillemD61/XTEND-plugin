@@ -2,7 +2,7 @@
 
 This is a Domoticz plugin for collection of data from an Intergas Xtend heatpump unit.
 
-Once installed and activated, the plugin will create 52 Domoticz devices (in plugin version 1.0.1) and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard. A config file for a Dashticz dashboard is also created, see below for instructions.
+Once installed and activated, the plugin will create 52 Domoticz devices and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard. A config file for a Dashticz dashboard is also created, see below for instructions.
 
 This plugin does NOT communicate data back to the Xtend. It does NOT allow any control of the heatpump. It only collects information. For anyone wanting to control for example the thermostat setpoint, the Intergas InComfort LAN2RF Gateway hardware plugin is recommended (provided you have the Intergas Gateway installed of course) or any other Opentherm communication device.
 
@@ -47,7 +47,7 @@ Step 3 to 5 above can be replaced with "git clone https://github.com/WillemD61/X
 
 # Dashticz dashboard installation
 
-On startup, the plugin will create a template config file for a Dashticz screen showing all 52 datapoints.
+On startup, the plugin will create a template config file for a Dashticz screen showing all 52 datapoints. The use of this Dashticz dashboard is optional. If you only use Domoticz and not Dashticz then you can skip below installation instructions.
 
 Installation instructions:
 1) Make sure you have Dashticz installed
@@ -67,7 +67,9 @@ or</br>
      * the code for the dashticz dashboard was added</br>
      * Boiler status value now shows text instead of number, for some known values.</br>
 1.0.2 </br>
-     * added shorter polling intervals
-     * replaced 8e38 by 7ee6. Note the description on the existing device needs to be adapted manually
+     * added shorter polling intervals</br>
+     * replaced 8e38 by 7ee6. Note the description on the existing device needs to be adapted manually.</br>
+1.0.3 </br>
+     * adapted for Domoticz maximum heartbeat interval of 30 seconds. Skipping heartbeats if polling interval longer than 30 seconds.</br>
 
 
