@@ -9,8 +9,10 @@
 # version 1.0.2
 # - added shorter polling intervals
 # - replaced datapoint 8e38 by 7ee6, boiler temp
+# version 1.03
+# - adapted for maximum Domoticz heartbeat 30 seconds
 """
-<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.1" >
+<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.3" >
     <description>
         <h2>Intergas Xtend heatpump</h2><br/>
         This plugin uses the API on the Intergas Xtend WIFI connection to get the values of a large numbers of parameters<br/>
@@ -27,8 +29,8 @@
             <options>
                 <option label="10 seconds" value="10" />
                 <option label="20 seconds" value="20" />
-                <option label="30 seconds" value="30" />
-                <option label="1 minute" value="60" default="true" />
+                <option label="30 seconds" value="30" default="true" /> # maximum domoticz heartbeat time is 30 seconds
+                <option label="1 minute" value="60" />
                 <option label="2 minutes" value="120" />
                 <option label="3 minutes" value="180" />
                 <option label="4 minutes" value="240" />
@@ -132,7 +134,14 @@ class XtendPlugin:
 
     def onStart(self):
         Domoticz.Log("onStart called")
-        Domoticz.Heartbeat(int(Parameters["Mode1"]))
+        if int(Parameters["Mode1"])<=30:
+            Domoticz.Heartbeat(int(Parameters["Mode1"]))
+            self.heartbeatWaits=0
+        else:
+            Domoticz.Heartbeat(30)
+            self.heartbeatWaits=int(int(Parameters["Mode1"])/30 - 1)
+        self.heartbeatCounter=0
+        #Domoticz.Log("HBwaits: "+str(self.heartbeatWaits)+", HBcounter: "+str(self.heartbeatCounter))
         self.Hwid=Parameters['HardwareID']
         # cycle through device list and create any non-existing devices when the plugin/domoticz is started
         for Dev in DEVSLIST:
@@ -180,7 +189,13 @@ class XtendPlugin:
 
     def onHeartbeat(self):
         Domoticz.Log("onHeartbeat called")
-        self.getXtendData()
+        #Domoticz.Log("HBwaits: "+str(self.heartbeatWaits)+", HBcounter: "+str(self.heartbeatCounter))
+        # skip one or more heartbeats if polling interval > 30 seconds
+        if self.heartbeatWaits==self.heartbeatCounter:
+            self.getXtendData()
+            self.heartbeatCounter=0
+        else:
+            self.heartbeatCounter+=1
 
     def getXtendData(self):
         Domoticz.Log("getXtendData called")
@@ -189,7 +204,7 @@ class XtendPlugin:
             response=requests.get(APIurl, timeout=5)
             if response.status_code==200:
                 responseJson=response.json()
-                Domoticz.Log(responseJson["stats"])
+                #Domoticz.Log(responseJson["stats"])
                 for Dev in DEVSLIST:
                     type=DEVSLIST[Dev][1]
                     subtype=DEVSLIST[Dev][2]
