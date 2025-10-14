@@ -11,6 +11,8 @@
 # - replaced datapoint 8e38 by 7ee6, boiler temp
 # version 1.03
 # - adapted for maximum Domoticz heartbeat 30 seconds
+version 1.04
+# - added explicit conversion to integer when assigning nValue (without raised error in Domoticz 2025.2)
 """
 <plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.3" >
     <description>
@@ -224,7 +226,7 @@ class XtendPlugin:
                                 fieldValue=round(float(multiplier*responseJson["stats"][Dev]),0)
                             else:
                                 fieldValue=round(float(multiplier*responseJson["stats"][Dev]),1)
-                            Devices[DeviceID].Units[Unit].nValue=fieldValue
+                            Devices[DeviceID].Units[Unit].nValue=int(fieldValue)
                             Devices[DeviceID].Units[Unit].sValue=str(fieldValue)
                             Devices[DeviceID].Units[Unit].Update()
 
@@ -239,7 +241,7 @@ class XtendPlugin:
                                 Devices[DeviceID].Units[Unit].nValue=0
                                 fieldText=fieldValue
                             else:
-                                Devices[DeviceID].Units[Unit].nValue=fieldValue
+                                Devices[DeviceID].Units[Unit].nValue=int(fieldValue)
                                 fieldText=str(fieldValue)
                             if Dev=='777d':
                                 if fieldValue==0: fieldText="DHW"
