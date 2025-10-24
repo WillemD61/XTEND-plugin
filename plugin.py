@@ -11,7 +11,7 @@
 # - replaced datapoint 8e38 by 7ee6, boiler temp
 # version 1.03
 # - adapted for maximum Domoticz heartbeat 30 seconds
-version 1.04
+# version 1.04
 # - added explicit conversion to integer when assigning nValue (without raised error in Domoticz 2025.2)
 """
 <plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.3" >
