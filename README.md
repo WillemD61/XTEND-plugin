@@ -18,7 +18,7 @@ This will request the ambient temperature every 5 minutes and therefore keep the
 
 This plugin is based on the excellent work done by Dennis Schoutsen (https://github.com/DSchoutsen/HA_connection_Xtend) and Thomas van Tilburg (https://github.com/thomasvt1/xtend-bridge) for integration of the Xtend with Home Assistant. I have used their info about sensor codes and their dashboard code to determine which sensor info to collect. As result, using the Domoticz devices you get more or less the same data as availabe from the Xtend directly (when you connect your PC directly to the Xtend, open a webbrowser and look at the summary or statistics pages). The key of the sensor is stored in the description field of the Domoticz device for easy reference.
 
-Later I used Wireshark to find the codes that the XTEND screens request via HTTP GET from the XTEND unit and I have matched most of them (work ongoing..) to the XTEND screens. This is shown in the documentation folder. I also noted that the screens request a number of fields that are not shown (for example about cooling). This can be found in the excel spreadsheet in the documentation for future further development.
+Later I used Wireshark to find the codes that the XTEND screens request via HTTP GET from the XTEND unit and I have matched most of them (work ongoing..) to the XTEND screens. This is shown in the documentation folder. I also noted that the screens request a number of fields that are not shown (for example about cooling). This can be found in the excel spreadsheet in the documentation for future further development. Codes in the plugin were further aligned with the outcome of this analysis from version 1.05 onwards. See release notes.
 
 Note that not all sensors might give useful information in your particular case. For example in my own case my older Intergas boiler does not provide the supply and return temperature. I still have included these sensors in the data collection to keep the plugin general purpose. You can deactivate such sensors in Domoticz if desired. Also I could not identify the correct keys for some sensors from the Xtend interface, for example the crank and pan heater info, so those have been left out (for now).
 
@@ -73,5 +73,21 @@ or</br>
      * replaced 8e38 by 7ee6 because 8e38 was no longer available after update to firmware v0.86. Note the description on the existing device needs to be adapted manually.</br>
 1.0.3 </br>
      * adapted for Domoticz maximum heartbeat interval of 30 seconds. Skipping heartbeats if polling interval longer than 30 seconds.</br>
-
-
+1.0.4 </br>
+     * added explicit conversion to integer when assigning nValue (without it raised an error in Domoticz 2025.2)</br>
+1.0.5 </br>
+     * data validation on invalid responses added.</br>
+     * sensor codes aligned with Xtend screen codes:</br>
+          # 5077=energy generated replaced by 503e=heatpump energy generated</br>
+          # 7e81 instead of 623c for CH return temperature</br>
+          # 62d1 instead of 6573 for outside temperature</br>
+          # 7ed3 instead of 844c for water pressure</br>
+          # 7e31 instead of 8e8f for boiler setpoint temperature</br>
+     !!! note that code references in description field off the devices need to be adapted manually  !!!</br>
+     * renamed devices</br>
+          # "Burner status" renamed to "Heat demand boiler"</br>
+          # "Heatdemand status" renamed to "Heat demand HP"</br>
+     * additional sensors added</br>
+          # 5088 Boiler energy generated</br>
+          * b2bc Boiler Flame</br>
+          * f9f2 Status flags</br>
