@@ -70,7 +70,7 @@ or</br>
      * Boiler status value now shows text instead of number, for some known values.</br>
 1.0.2 </br>
      * added shorter polling intervals</br>
-     * replaced 8e38 by 7ee6. Note the description on the existing device needs to be adapted manually.</br>
+     * replaced 8e38 by 7ee6 because 8e38 was no longer available after update to firmware v0.86. Note the description on the existing device needs to be adapted manually.</br>
 1.0.3 </br>
      * adapted for Domoticz maximum heartbeat interval of 30 seconds. Skipping heartbeats if polling interval longer than 30 seconds.</br>
 
