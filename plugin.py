@@ -13,8 +13,25 @@
 # - adapted for maximum Domoticz heartbeat 30 seconds
 # version 1.04
 # - added explicit conversion to integer when assigning nValue (without raised error in Domoticz 2025.2)
+# version 1.05
+# - data validation on invalid responses added
+# - sensor codes aligned with Xtend screen codes
+#     5077=energy generated replaced by 503e=heatpump energy generated
+#     7e81 instead of 623c for CH return temperature
+#     62d1 instead of 6573 for outside temperature
+#     7ed3 instead of 844c for water pressure
+#     7e31 instead of 8e8f for boiler setpoint temperature
+#     *** note that code references in description field off the devices need to be adapted manually  ***
+# - renamed devices
+#     "Burner status" renamed to "Heat demand boiler"
+#     "Heatdemand status" renamed to "Heat demand HP"
+# - additional sensors added
+#     5088 Boiler energy generated
+#     b2bc Boiler Flame
+#     f9f2 Status flags
+
 """
-<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.3" >
+<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.5" >
     <description>
         <h2>Intergas Xtend heatpump</h2><br/>
         This plugin uses the API on the Intergas Xtend WIFI connection to get the values of a large numbers of parameters<br/>
@@ -58,7 +75,7 @@ DEVSLIST={
 # 80,5,0 : temperature devices
     "79b3":  [ 1, 80, 5, 0, {}, 0.01, "Room temp"],
     "7921":  [ 2, 80, 5, 0, {}, 0.01, "Target room temp"],
-    "6573":  [ 3, 80, 5, 0, {}, 0.01, "Outside temp"],
+    "62d1":  [ 3, 80, 5, 0, {}, 0.01, "Outside temp"],
     "6280":  [ 4, 80, 5, 0, {}, 0.01, "HP return temp"],
     "62e7":  [ 5, 80, 5, 0, {}, 0.01, "HP supply temp "],
     "62ed":  [ 6, 80, 5, 0, {}, 0.01, "HP setpoint temp"],
@@ -72,13 +89,13 @@ DEVSLIST={
     "6c53":  [ 14, 80, 5, 0, {}, 0.01, "Subcooling temp"],
     "65c1":  [ 15, 80, 5, 0, {}, 0.01, "Coil temp"],
     "7ee6":  [ 16, 80, 5, 0, {}, 0.01, "Boiler temp"], # replacing 8e38 because no longer available in firmware 0.86
-    "8e8f":  [ 17, 80, 5, 0, {}, 0.01, "Boiler CH setpoint temp"],
+    "7e31":  [ 17, 80, 5, 0, {}, 0.01, "Boiler CH setpoint temp"],
     "625b":  [ 18, 80, 5, 0, {}, 0.01, "Boiler CH supply temp"],
-    "623c":  [ 19, 80, 5, 0, {}, 0.01, "Boiler CH return temp"],
+    "7e81":  [ 19, 80, 5, 0, {}, 0.01, "Boiler CH return temp"],
     "8ecb":  [ 20, 80, 5, 0, {}, 0.01, "Boiler DHW max temp"],
     "8edb":  [ 21, 80, 5, 0, {}, 0.01, "Boiler DHW actual temp"],
 # 243,9,0 : pressure devices
-    "844c":  [ 22, 243, 9, 0, {}, 0.01, "CH water pressure"],
+    "7ed3":  [ 22, 243, 9, 0, {}, 0.01, "CH water pressure"],
     "6579":  [ 23, 243, 9, 0, {}, 0.01, "HP suction pressure"],
     "65b0":  [ 24, 243, 9, 0, {}, 0.01, "HP discharge gas pressure"],
 # 243,30,0 : flow devices
@@ -106,17 +123,21 @@ DEVSLIST={
     "712c":  [ 42, 113, 0, 3, {}, 1, "Boiler ignition fail count"],
 # 243,29,0 or 4: kwh device
     "50f2":  [ 43, 243, 29, 0, {'EnergyMeterMode': '1'}, 1, "HP energy usage"],
-    "5077":  [ 44, 243, 29, 4, {'EnergyMeterMode': '1'}, 1, "HP energy generated"],
+    "503e":  [ 44, 243, 29, 4, {'EnergyMeterMode': '1'}, 1, "HP energy generated"],
 # 243,31,0 : custom device
     "5041":  [ 45, 243, 31, 0, {}, 0.1, "COP"],
 # 243,19,0 : text device
-    "7e7a":  [ 46, 243, 19, 0, {}, 1, "Burner status"],
-    "7e51":  [ 47, 243, 19, 0, {}, 1, "Heatdemand status"],
+    "7e7a":  [ 46, 243, 19, 0, {}, 1, "Heat demand Boiler"],
+    "7e51":  [ 47, 243, 19, 0, {}, 1, "Heat demand HP"],
     "657e":  [ 48, 243, 19, 0, {}, 1, "Operation mode"],
     "6578":  [ 49, 243, 19, 0, {}, 1, "Working mode"],
     "777d":  [ 50, 243, 19, 0, {}, 1, "Heatpump mode"],
     "77dd":  [ 51, 243, 19, 0, {}, 1, "System status"],
     "843a":  [ 52, 243, 19, 0, {}, 1, "Boiler status"],
+# devices added in later versions
+    "5088":  [ 53, 243, 29, 4, {'EnergyMeterMode': '1'}, 1, "Boiler energy generated"],
+    "b2bc":  [ 54, 243, 19, 0, {}, 1, "Boiler flame"],
+    "f9f2":  [ 55, 243, 19, 0, {}, 1, "Status flags"],
 }
 
 # define the url to get the Xtend field values
@@ -135,7 +156,9 @@ class XtendPlugin:
         return
 
     def onStart(self):
-        Domoticz.Log("onStart called")
+        Domoticz.Log("onStart called with parameters")
+        for elem in Parameters:
+            Domoticz.Log(str(elem)+" "+str(Parameters[elem]))
         if int(Parameters["Mode1"])<=30:
             Domoticz.Heartbeat(int(Parameters["Mode1"]))
             self.heartbeatWaits=0
@@ -212,7 +235,8 @@ class XtendPlugin:
                     subtype=DEVSLIST[Dev][2]
                     Unit=DEVSLIST[Dev][0]
                     DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
-                    if Devices[DeviceID].Units[Unit].Used==1:
+                    #print(str(responseJson["stats"][Dev]))
+                    if ((Devices[DeviceID].Units[Unit].Used==1) and (str(responseJson["stats"][Dev])!="32767")): # invalid value will not processed
                         if ((type==80) or # temperature device
                             (type==113) or # counter device
                             ((type==243) and (subtype==9)) or # pressure device
@@ -232,9 +256,10 @@ class XtendPlugin:
 
                         if ((type==243) and (subtype==29)): # kwh device
                             fieldValue=responseJson["stats"][Dev]
-                            Devices[DeviceID].Units[Unit].nValue=0
-                            Devices[DeviceID].Units[Unit].sValue=str(fieldValue)+";1" # watts are supplied, kwh are calculated by Domoticz.
-                            Devices[DeviceID].Units[Unit].Update()
+                            if fieldValue>=0 and fieldValue<10000 : # only valid values will be processed
+                                Devices[DeviceID].Units[Unit].nValue=0
+                                Devices[DeviceID].Units[Unit].sValue=str(fieldValue)+";1" # watts are supplied, kwh are calculated by Domoticz.
+                                Devices[DeviceID].Units[Unit].Update()
                         if ((type==243) and (subtype==19)): # text device
                             fieldValue=responseJson["stats"][Dev]
                             if Dev=="47e0":
@@ -322,6 +347,7 @@ class XtendPlugin:
                                 else: fieldText="Unknown, value: "+str(fieldValue)
                             if Dev=='843a':
                                 if fieldValue==0: fieldText="OFF"
+                                elif fieldValue==10: fieldText="GAS HEATING"
                                 elif fieldValue==12: fieldText="DHW"
                                 else: fieldText="Unknown, value: "+str(fieldValue)
 
@@ -403,7 +429,7 @@ class XtendPlugin:
 
             print("columns[\"xtendactual2\"] = {",file=fileHandle)
             print("    blocks : [",end=" ",file=fileHandle)
-            for Unit in [14,15,23,24,27,30,26,31]:
+            for Unit in [14,15,23,24,27,30,26,31,55]:
                 DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
                 if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
                     DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
@@ -416,7 +442,7 @@ class XtendPlugin:
 
             print("columns[\"boileractual1\"] = {",file=fileHandle)
             print("    blocks : [",end=" ",file=fileHandle)
-            for Unit in [34,35,39,40,52,46,41,42]:
+            for Unit in [34,35,39,40,52,46,41,42,53]:
                 DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
                 if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
                     DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
@@ -430,7 +456,7 @@ class XtendPlugin:
 
             print("columns[\"boileractual2\"] = {",file=fileHandle)
             print("    blocks : [",end=" ",file=fileHandle)
-            for Unit in [16,17,18,19,28,29,20,21,25]:
+            for Unit in [16,17,18,19,28,29,20,21,25,54]:
                 DeviceID="{:04x}{:04x}".format(self.Hwid,Unit)
                 if (Devices[DeviceID].Units[Unit].Type==113 or (Devices[DeviceID].Units[Unit].Type==243 and Devices[DeviceID].Units[Unit].SubType==29)):
                     DomoticzID="\'"+str(Devices[DeviceID].Units[Unit].ID)+"_1\'"
