@@ -2,7 +2,7 @@
 
 This is a Domoticz plugin for collection of data from an Intergas Xtend heatpump unit.
 
-Once installed and activated, the plugin will create 52 Domoticz devices and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard. A config file for an optional Dashticz dashboard is also created, see below for instructions.
+Once installed and activated, the plugin will create more than 50 Domoticz devices and then collect data from the Xtend indoor unit and store the data on the Domoticz devices. The Domoticz devices can be seen via the Domoticz GUI and used for further processing into a Domoticz or Dashticz dashboard. A config file for an optional Dashticz dashboard is also created, see below for instructions.
 
 This plugin does NOT communicate data back to the Xtend. It does NOT allow any control of the heatpump. It only collects information. For anyone wanting to control for example the thermostat setpoint, the Intergas InComfort LAN2RF Gateway hardware plugin is recommended (provided you have the Intergas Gateway installed of course) or any other Opentherm communication device.
 
