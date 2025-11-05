@@ -240,7 +240,7 @@ class XtendPlugin:
             response=requests.get(APIurl, timeout=5)
             if response.status_code==200:
                 responseJson=response.json()
-                Domoticz.Log(responseJson["stats"])
+#                Domoticz.Log(responseJson["stats"])
                 for Dev in DEVSLIST:
                     type=DEVSLIST[Dev][1]
                     subtype=DEVSLIST[Dev][2]
