@@ -358,7 +358,7 @@ class XtendPlugin:
                                 else: fieldText="Unknown, value: "+str(fieldValue)
                             if Dev=='843a':
                                 if fieldValue==0: fieldText="OFF"
-                                elif fieldValue==2: fieldText="PRE/POST HEATING PUMP" 
+                                elif fieldValue==2: fieldText="PRE/POST HEATING RUN" 
                                 elif fieldValue==10: fieldText="GAS HEATING"
                                 elif fieldValue==12: fieldText="DHW"
                                 else: fieldText="Unknown, value: "+str(fieldValue)
