@@ -83,7 +83,7 @@ or</br>
           # 62d1 instead of 6573 for outside temperature</br>
           # 7ed3 instead of 844c for water pressure</br>
           # 7e31 instead of 8e8f for boiler setpoint temperature</br>
-     !!! note that code references in description field off the devices need to be adapted manually  !!!</br>
+     !!! note that code references in description field off existing devices need to be adapted manually  !!!</br>
      * renamed devices</br>
           # "Burner status" renamed to "Heat demand boiler"</br>
           # "Heatdemand status" renamed to "Heat demand HP"</br>
@@ -91,3 +91,14 @@ or</br>
           # 5088 Boiler energy generated</br>
           * b2bc Boiler Flame</br>
           * f9f2 Status flags</br>
+1.0.6</br>
+     * b2bc removed again</br>
+     * f9f2 moved to entry 46 to replace 7e7a, 7e7a never changed</br>
+     * "boiler state" value descriptions updated</br>
+     * status devices aligned with XTEND screen</br>
+         # entry 47 "heat demand hp" renamed to "device status"</br>
+         # entry 48 "operation mode" renamed "redundant ?" and removed</br>
+         # entry 49 "working mode" renamed to "operating mode"</br>
+         # entry 50 "heatpump mode" renamed to "heat demand hp"</br>
+         !!! note that existing device names need to be adapted manually  !!!</br>
+
