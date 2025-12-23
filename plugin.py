@@ -359,15 +359,17 @@ class XtendPlugin:
                             if Dev=='843a':
                                 if fieldValue==0: fieldText="OFF"
                                 elif fieldValue==2: fieldText="PRE/POST HEATING RUN" 
+                                elif fieldValue==4: fieldText="DHW"
+                                elif fieldValue==8: fieldText="DHW"
                                 elif fieldValue==10: fieldText="GAS HEATING"
                                 elif fieldValue==12: fieldText="DHW"
                                 else: fieldText="Unknown, value: "+str(fieldValue)
                             if Dev=='f9f2':
                                 bitPosition=8
                                 if (fieldValue & (1 << bitPosition)) !=0 :
-                                    fieldText="ON  "
+                                    fieldText="ON"
                                 else:
-                                    fieldText="OFF "
+                                    fieldText="OFF"
                             Devices[DeviceID].Units[Unit].sValue=fieldText
                             Devices[DeviceID].Units[Unit].Update()
             else:
