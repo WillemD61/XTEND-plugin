@@ -1,0 +1,42 @@
+-- this scripts actives two switch devices depending on the boilerstatus as received from the Xtend
+-- the switch devices are then used in another script for gas classification
+local idxBoilerStatus=295 -- device updated by the Xtend plugin
+local idxGasHeating=316 -- a manually created switch to record the status
+local idxHotWater=317 -- an another switch to record the status
+return {
+	on = {
+		devices = {
+			idxBoilerStatus,
+		},
+	},	
+	data = {
+		previousStateBoiler = { initial = "OFF" }
+	},
+	logging = {
+		level = domoticz.LOG_INFO,
+		marker = 'gas usage detect',
+	},
+	execute = function(domoticz, item)
+		domoticz.log('Device ' .. item.name .. ' was triggered, state is'..domoticz.devices(idxBoilerStatus).text, domoticz.LOG_INFO)
+		if domoticz.devices(idxBoilerStatus).text~=domoticz.data.previousStateBoiler then -- not only an update but an actual change
+		    domoticz.log('Device ' .. item.name .. ' was changed to'..domoticz.devices(idxBoilerStatus).text, domoticz.LOG_INFO)
+    		if domoticz.devices(idxBoilerStatus).text=="GAS HEATING" then
+    		    domoticz.devices(idxGasHeating).switchOn()
+    		else
+    		    if domoticz.data.previousStateBoiler=="GAS HEATING" then
+    		        domoticz.devices(idxGasHeating).switchOff()
+    		    end      
+    		end
+    		if domoticz.devices(idxBoilerStatus).text=="DHW" then
+    		    domoticz.devices(idxHotWater).switchOn()
+    		else
+    		    if domoticz.data.previousStateBoiler=="DHW" then
+    		        domoticz.devices(idxHotWater).switchOff()
+    		    end 
+    		end
+    		domoticz.data.previousStateBoiler=domoticz.devices(idxBoilerStatus).text
+	    else
+	        domoticz.log('Device ' .. item.name .. ' was not changed, still '..domoticz.devices(idxBoilerStatus).text, domoticz.LOG_INFO)
+    	end	
+	end
+}
