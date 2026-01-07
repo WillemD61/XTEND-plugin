@@ -107,5 +107,5 @@ or</br>
          # entry 50 "heatpump mode" renamed to "heat demand hp"</br>
          !!! note that existing device names need to be adapted manually  !!!</br>
 1.0.7</br>
-    * added the option for receiving email alerts, configuration in the startup screen
-    * added the option for data logging, configuration in the startup screen
+    * added the option for receiving email alerts, configuration in the startup screen</br>
+    * added the option for data logging, configuration in the startup screen</br>
