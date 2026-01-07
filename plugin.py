@@ -22,7 +22,7 @@
 #     7ed3 instead of 844c for water pressure
 #     7e31 instead of 8e8f for boiler setpoint temperature
 #     *** note that code references in description field off the devices need to be adapted manually  ***
-# - renamed devices 
+# - renamed devices
 #     "Burner status" renamed to "Heat demand boiler"
 #     "Heatdemand status" renamed to "Heat demand HP"
 # - additional sensors added
@@ -39,10 +39,13 @@
 #          entry 49 "working mode" renamed to "operating mode"
 #          entry 50 "heatpump mode" renamed to "heat demand hp"
 #     *** note that existing device names need to be adapted manually  ***
-
+# version 1.0.7
+#     if configured in startup options:
+#           1) an email will now be sent (only once!!) when the communication with the XTEND fails.
+#           2) data received will be shown in the log file
 
 """
-<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.6" >
+<plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.7" >
     <description>
         <h2>Intergas Xtend heatpump</h2><br/>
         This plugin uses the API on the Intergas Xtend WIFI connection to get the values of a large numbers of parameters<br/>
@@ -65,6 +68,18 @@
                 <option label="3 minutes" value="180" />
                 <option label="4 minutes" value="240" />
                 <option label="5 minutes" value="300" />
+            </options>
+        </param>
+        <param field="Mode2" label="Alerts On" width="150px">
+            <options>
+                <option label="Yes" value="Yes" default="true" />
+                <option label="No" value="No" />
+            </options>
+        </param>
+        <param field="Mode3" label="Show data in log" width="150px">
+            <options>
+                <option label="Yes" value="Yes" />
+                <option label="No" value="No" default="true" />
             </options>
         </param>
     </params>
@@ -176,8 +191,10 @@ class XtendPlugin:
         else:
             Domoticz.Heartbeat(30)
             self.heartbeatWaits=int(int(Parameters["Mode1"])/30 - 1)
+        self.notificationsOn=(Parameters["Mode2"]=="Yes")
+        self.emailAlertSent=False
+        self.showDataLog=(Parameters["Mode3"]=="Yes")
         self.heartbeatCounter=0
-        #Domoticz.Log("HBwaits: "+str(self.heartbeatWaits)+", HBcounter: "+str(self.heartbeatCounter))
         self.Hwid=Parameters['HardwareID']
         # cycle through device list and create any non-existing devices when the plugin/domoticz is started
         for Dev in DEVSLIST:
@@ -203,7 +220,6 @@ class XtendPlugin:
         for Dev in DEVSLIST:
             Domoticz.Log("DEVSLIST "+str(DEVSLIST[Dev][0])+DEVSLIST[Dev][6])
         self.createCONFIGJS()
-
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -240,7 +256,7 @@ class XtendPlugin:
             response=requests.get(APIurl, timeout=5)
             if response.status_code==200:
                 responseJson=response.json()
-#                Domoticz.Log(responseJson["stats"])
+                if self.showDataLog: Domoticz.Log(responseJson["stats"])
                 for Dev in DEVSLIST:
                     type=DEVSLIST[Dev][1]
                     subtype=DEVSLIST[Dev][2]
@@ -358,7 +374,7 @@ class XtendPlugin:
                                 else: fieldText="Unknown, value: "+str(fieldValue)
                             if Dev=='843a':
                                 if fieldValue==0: fieldText="OFF"
-                                elif fieldValue==2: fieldText="PRE/POST HEATING RUN" 
+                                elif fieldValue==2: fieldText="PRE/POST HEATING RUN"
                                 elif fieldValue==4: fieldText="DHW"
                                 elif fieldValue==8: fieldText="DHW"
                                 elif fieldValue==10: fieldText="GAS HEATING"
@@ -372,12 +388,20 @@ class XtendPlugin:
                                     fieldText="OFF"
                             Devices[DeviceID].Units[Unit].sValue=fieldText
                             Devices[DeviceID].Units[Unit].Update()
+                if self.emailAlertSent==True:
+                    self.emailAlertSent=False
             else:
                 raise Exception
         except Timeout:
             Domoticz.Error("Timeout on getting Xtend data. Check connection.")
+            if self.notificationsOn and self.emailAlertSent==False:
+                sendemail=requests.get("http://127.0.0.1:8080/json.htm?type=command&param=sendnotification&subject='ATTENTION: XTEND communication timeout'&body='Please check and restore the connection by pushing the button on the Xtend '")
+                self.emailAlertSent=True
         except:
             Domoticz.Error("No proper Xtend data received. Check connection.")
+            if self.notificationsOn and self.emailAlertSent==False:
+                sendemail=requests.get("http://127.0.0.1:8080/json.htm?type=command&param=sendnotification&subject='ATTENTION: XTEND communication data error'&body='Please check the log and solve the error.'")
+                self.emailAlertSent=True
 
 
     def createCONFIGJS(self): # create a default CONFIG.js file for a Dashticz dashboard
