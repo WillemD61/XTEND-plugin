@@ -14,6 +14,8 @@ The WIFI connection of the Xtend needs to be kept active, otherwise it will clos
 */5 * * * * curl 10.20.30.1/api/stats/values?fields=6573<br/>
 This will request the ambient temperature every 5 minutes and therefore keep the connection open even if Domoticz fails. For even more assurance this query could be done from a separate server, i.e. different hardware from the Domoticz server.
 
+On startup of the plugin you can configure whether you want to receive an email notification if the Xtend communication fails. (The domoticz email system needs to be configured in the settings if you use this option).
+
 # Sensor data 
 
 This plugin is based on the excellent work done by Dennis Schoutsen (https://github.com/DSchoutsen/HA_connection_Xtend) and Thomas van Tilburg (https://github.com/thomasvt1/xtend-bridge) for integration of the Xtend with Home Assistant. I have used their info about sensor codes and their dashboard code to determine which sensor info to collect. As result, using the Domoticz devices you get more or less the same data as availabe from the Xtend directly (when you connect your PC directly to the Xtend, open a webbrowser and look at the summary or statistics pages). The key of the sensor is stored in the description field of the Domoticz device for easy reference.
@@ -24,6 +26,8 @@ Note that not all sensors might give useful information in your particular case.
 
 I started data collection myself on 25-06-2025. Future versions of the plugin might use different or more sensors and Domoticz devices, depending on experience gained and feedback received.
 
+On startup of the plugin you can configure whether you want the domoticz log to show the Xtend data as received, before any further processing.
+
 # Domoticz code
 
 The plugin uses the newer DomoticzEx extended plugin framework. It contains one workaround for a Domoticz bug related to kWh devices, as also shown in the Python code. Also, for energy usage (in kWh) it uses the power info (in Watts) from the Xtend and lets Domoticz calculate the energy in kWh. Personally, I also use a Homewizard WIFI kWh device for power and energy measurement. This is separate from the plugin.
@@ -32,6 +36,7 @@ The plugin uses the newer DomoticzEx extended plugin framework. It contains one 
 
 1) Make sure Python is installed on your system with the json and requests libraries. 
 2) Make sure to backup your system before installing. The plugin works in my environment, but is provided as-is without any warranty.
+3) Configure the Domoticz email system in the settings first, if you want to receive notifications on data communication of this plugin.
 
 # Installation instructions
 
@@ -101,4 +106,6 @@ or</br>
          # entry 49 "working mode" renamed to "operating mode"</br>
          # entry 50 "heatpump mode" renamed to "heat demand hp"</br>
          !!! note that existing device names need to be adapted manually  !!!</br>
-
+1.0.7</br>
+    * added the option for receiving email alerts, configuration in the startup screen
+    * added the option for data logging, configuration in the startup screen
