@@ -43,6 +43,10 @@
 #     if configured in startup options:
 #           1) an email will now be sent (only once!!) when the communication with the XTEND fails.
 #           2) data received will be shown in the log file
+# version 1.0.8
+#           1) an email will be sent when communication has been restored, if configured
+#           2) notification code has been added as a device
+#           3) a notification will be sent when a notification is raised, if configured
 
 """
 <plugin key="IntergasXtend" name="Intergas Xtend heatpump" author="WillemD61" version="1.0.7" >
@@ -155,7 +159,7 @@ DEVSLIST={
 # 243,19,0 : text device
     "f9f2":  [ 46, 243, 19, 0, {}, 1, "Heat demand Boiler"],
     "7e51":  [ 47, 243, 19, 0, {}, 1, "Device status"],
-#    "657e":  [ 48, 243, 19, 0, {}, 1, "Redundant?"],
+    "7940":  [ 48, 243, 19, 0, {}, 1, "Notification"],
     "6578":  [ 49, 243, 19, 0, {}, 1, "Operating mode"],
     "777d":  [ 50, 243, 19, 0, {}, 1, "Heat demand HP"],
     "77dd":  [ 51, 243, 19, 0, {}, 1, "System status"],
@@ -174,7 +178,6 @@ for Dev in DEVSLIST:
     APIFieldsString+=Dev
     APIFieldsString+=","
 APIurl=XtendIP+XtendAPI+APIFieldsString
-
 
 class XtendPlugin:
     enabled = False
@@ -388,10 +391,20 @@ class XtendPlugin:
                                     fieldText="OFF"
                             Devices[DeviceID].Units[Unit].sValue=fieldText
                             Devices[DeviceID].Units[Unit].Update()
+                            if Dev=='7940':
+                                if fieldValue!=255:
+                                    raise ValueError(f"notification code {fieldValue}")
                 if self.emailAlertSent==True:
                     self.emailAlertSent=False
+                    sendemail=requests.get("http://127.0.0.1:8080/json.htm?type=command&param=sendnotification&subject='XTEND comms working again'&body='Problem solved'")
             else:
                 raise Exception
+        except ValueError:
+            Domoticz.Error("Notification code received:"+str(fieldValue)+" Check manual.")
+            if self.notificationsOn and self.emailAlertSent==False:
+                errorstring="http://127.0.0.1:8080/json.htm?type=command&param=sendnotification&subject='ATTENTION: XTEND notification'&body=Please check code "+str(fieldValue)
+                sendemail=requests.get(errorstring)
+                self.emailAlertSent=True
         except Timeout:
             Domoticz.Error("Timeout on getting Xtend data. Check connection.")
             if self.notificationsOn and self.emailAlertSent==False:
