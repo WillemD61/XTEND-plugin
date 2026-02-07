@@ -109,3 +109,7 @@ or</br>
 1.0.7</br>
     * added the option for receiving email alerts, configuration in the startup screen</br>
     * added the option for data logging, configuration in the startup screen</br>
+1.0.8</br>
+    * email when communication has been restored</br>
+    * device for notification code added</br>
+    * email when notification raised
